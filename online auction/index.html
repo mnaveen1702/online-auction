@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Online Auction Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4.7.2/dist/socket.io.min.js"></script>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fas fa-gavel"></i> AuctionHub</h2>
+            </div>
+            <ul class="sidebar-menu">
+                <li class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</li>
+                <li><i class="fas fa-chart-line"></i> Analytics</li>
+                <li><i class="fas fa-shopping-cart"></i> Auctions</li>
+                <li><i class="fas fa-users"></i> Bidders</li>
+                <li><i class="fas fa-envelope"></i> Messages <span class="notification-badge">3</span></li>
+                <li><i class="fas fa-comments"></i> Chat</li>
+                <li><i class="fas fa-calendar"></i> Schedule</li>
+                <li><i class="fas fa-file-invoice"></i> Reports</li>
+                <li><i class="fas fa-user-friends"></i> Users</li>
+                <li><i class="fas fa-address-book"></i> Contacts</li>
+                <li><i class="fas fa-lock"></i> Authentication</li>
+                <li><i class="fas fa-exclamation-triangle"></i> Error Pages</li>
+                <li><i class="fas fa-plus"></i> Extra Pages</li>
+                <li><i class="fas fa-palette"></i> UI Elements</li>
+                <li><i class="fas fa-wpforms"></i> Forms</li>
+                <li><i class="fas fa-table"></i> Tables</li>
+                <li><i class="fas fa-chart-pie"></i> Charts</li>
+                <li><i class="fas fa-icons"></i> Icons</li>
+                <li><i class="fas fa-map"></i> Maps</li>
+                <li><i class="fas fa-sitemap"></i> Multi Level</li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-left">
+                    <div class="search-bar">
+                        <i class="fas fa-search"></i>
+                        <input type="text" placeholder="Search auctions, bidders...">
+                    </div>
+                </div>
+                <div class="header-right">
+                    <i class="fas fa-bell notification-icon"></i>
+                    <i class="fas fa-comment chat-icon"></i>
+                    <i class="fas fa-cog settings-icon"></i>
+                    <div class="user-profile">
+                        <img src="https://via.placeholder.com/40" alt="User">
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dashboard Content -->
+            <div class="dashboard-content" id="dashboardContent">
+                <!-- Summary Cards -->
+                <div class="summary-cards">
+                    <div class="card card-1">
+                        <div class="card-content">
+                            <h3>Active Auctions</h3>
+                            <div class="card-value">24</div>
+                            <div class="card-change positive">
+                                <i class="fas fa-arrow-up"></i> +12.5%
+                            </div>
+                        </div>
+                        <div class="card-icon">
+                            <i class="fas fa-gavel"></i>
+                        </div>
+                    </div>
+                    <div class="card card-2">
+                        <div class="card-content">
+                            <h3>Total Bids</h3>
+                            <div class="card-value">1,847</div>
+                            <div class="card-change positive">
+                                <i class="fas fa-arrow-up"></i> +8.2%
+                            </div>
+                        </div>
+                        <div class="card-icon">
+                            <i class="fas fa-hand-holding-usd"></i>
+                        </div>
+                    </div>
+                    <div class="card card-3">
+                        <div class="card-content">
+                            <h3>Active Bidders</h3>
+                            <div class="card-value">156</div>
+                            <div class="card-change negative">
+                                <i class="fas fa-arrow-down"></i> -2.1%
+                            </div>
+                        </div>
+                        <div class="card-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                    </div>
+                    <div class="card card-4">
+                        <div class="card-content">
+                            <h3>Revenue</h3>
+                            <div class="card-value">$89,420</div>
+                            <div class="card-change positive">
+                                <i class="fas fa-arrow-up"></i> +15.3%
+                            </div>
+                        </div>
+                        <div class="card-icon">
+                            <i class="fas fa-dollar-sign"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Row -->
+                <div class="charts-row">
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h3>Bidding Activity</h3>
+                            <div class="chart-controls">
+                                <select id="timeRange">
+                                    <option value="7d">Last 7 Days</option>
+                                    <option value="30d">Last 30 Days</option>
+                                    <option value="90d">Last 90 Days</option>
+                                </select>
+                            </div>
+                        </div>
+                        <canvas id="biddingChart"></canvas>
+                        <div class="chart-stats">
+                            <div class="stat">
+                                <span class="stat-value">2,847</span>
+                                <span class="stat-label">Total Bids</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-value">$156,420</span>
+                                <span class="stat-label">Total Value</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-value">89.2%</span>
+                                <span class="stat-label">Success Rate</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h3>Auction Categories</h3>
+                        </div>
+                        <canvas id="categoryChart"></canvas>
+                        <div class="chart-legend">
+                            <div class="legend-item">
+                                <span class="legend-color" style="background: #3B82F6;"></span>
+                                <span class="legend-label">Art & Antiques</span>
+                                <span class="legend-percentage">35%</span>
+                                <span class="legend-trend positive">+2.5%</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-color" style="background: #10B981;"></span>
+                                <span class="legend-label">Jewelry</span>
+                                <span class="legend-percentage">28%</span>
+                                <span class="legend-trend positive">+1.5%</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-color" style="background: #F59E0B;"></span>
+                                <span class="legend-label">Electronics</span>
+                                <span class="legend-percentage">20%</span>
+                                <span class="legend-trend positive">+0.5%</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-color" style="background: #8B5CF6;"></span>
+                                <span class="legend-label">Collectibles</span>
+                                <span class="legend-percentage">12%</span>
+                                <span class="legend-trend negative">-0.5%</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-color" style="background: #06B6D4;"></span>
+                                <span class="legend-label">Other</span>
+                                <span class="legend-percentage">5%</span>
+                                <span class="legend-trend positive">+0.5%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Bidding Section -->
+                <div class="live-bidding-section">
+                    <div class="live-auction-card">
+                        <div class="auction-header">
+                            <h3>Live Auction: Vintage Rolex Watch</h3>
+                            <div class="auction-status live">
+                                <i class="fas fa-circle"></i> LIVE
+                            </div>
+                        </div>
+                        <div class="auction-content">
+                            <div class="auction-image">
+                                <img src="https://via.placeholder.com/200x150" alt="Vintage Rolex Watch">
+                            </div>
+                            <div class="auction-details">
+                                <div class="current-bid">
+                                    <span class="bid-label">Current Bid:</span>
+                                    <span class="bid-amount" id="currentBid">$12,500</span>
+                                </div>
+                                <div class="bidder-info">
+                                    <span class="bidder-label">Leading Bidder:</span>
+                                    <span class="bidder-name">John_Doe_2024</span>
+                                </div>
+                                <div class="time-remaining">
+                                    <span class="time-label">Time Remaining:</span>
+                                    <span class="time-value" id="timeRemaining">02:45:32</span>
+                                </div>
+                                <div class="bid-input">
+                                    <input type="number" id="bidAmount" placeholder="Enter your bid" min="12501">
+                                    <button class="bid-button" onclick="placeBid()">Place Bid</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bidding-history">
+                        <h3>Recent Bids</h3>
+                        <div class="bids-list" id="bidsList">
+                            <div class="bid-item">
+                                <span class="bidder">John_Doe_2024</span>
+                                <span class="bid-amount">$12,500</span>
+                                <span class="bid-time">2 min ago</span>
+                            </div>
+                            <div class="bid-item">
+                                <span class="bidder">ArtCollector99</span>
+                                <span class="bid-amount">$12,200</span>
+                                <span class="bid-time">5 min ago</span>
+                            </div>
+                            <div class="bid-item">
+                                <span class="bidder">WatchEnthusiast</span>
+                                <span class="bid-amount">$12,000</span>
+                                <span class="bid-time">8 min ago</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Widgets -->
+                <div class="bottom-widgets">
+                    <div class="widget">
+                        <h3>Top Bidders</h3>
+                        <div class="bidders-list">
+                            <div class="bidder-item">
+                                <div class="bidder-avatar">
+                                    <img src="https://via.placeholder.com/40" alt="Bidder">
+                                </div>
+                                <div class="bidder-info">
+                                    <span class="bidder-name">John_Doe_2024</span>
+                                    <span class="bidder-stats">$45,200 total bids</span>
+                                </div>
+                                <div class="bidder-rank">#1</div>
+                            </div>
+                            <div class="bidder-item">
+                                <div class="bidder-avatar">
+                                    <img src="https://via.placeholder.com/40" alt="Bidder">
+                                </div>
+                                <div class="bidder-info">
+                                    <span class="bidder-name">ArtCollector99</span>
+                                    <span class="bidder-stats">$38,750 total bids</span>
+                                </div>
+                                <div class="bidder-rank">#2</div>
+                            </div>
+                            <div class="bidder-item">
+                                <div class="bidder-avatar">
+                                    <img src="https://via.placeholder.com/40" alt="Bidder">
+                                </div>
+                                <div class="bidder-info">
+                                    <span class="bidder-name">WatchEnthusiast</span>
+                                    <span class="bidder-stats">$32,100 total bids</span>
+                                </div>
+                                <div class="bidder-rank">#3</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="widget">
+                        <h3>Upcoming Auctions</h3>
+                        <div class="upcoming-list">
+                            <div class="upcoming-item">
+                                <div class="upcoming-image">
+                                    <img src="https://via.placeholder.com/60x60" alt="Auction Item">
+                                </div>
+                                <div class="upcoming-details">
+                                    <span class="upcoming-title">Rare Picasso Painting</span>
+                                    <span class="upcoming-time">Starts in 2 hours</span>
+                                </div>
+                            </div>
+                            <div class="upcoming-item">
+                                <div class="upcoming-image">
+                                    <img src="https://via.placeholder.com/60x60" alt="Auction Item">
+                                </div>
+                                <div class="upcoming-details">
+                                    <span class="upcoming-title">Diamond Necklace</span>
+                                    <span class="upcoming-time">Starts in 4 hours</span>
+                                </div>
+                            </div>
+                            <div class="upcoming-item">
+                                <div class="upcoming-image">
+                                    <img src="https://via.placeholder.com/60x60" alt="Auction Item">
+                                </div>
+                                <div class="upcoming-details">
+                                    <span class="upcoming-title">Vintage Car</span>
+                                    <span class="upcoming-time">Starts in 6 hours</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="widget">
+                        <h3>Bidding Performance</h3>
+                        <div class="performance-metrics">
+                            <div class="metric">
+                                <div class="metric-circle" data-percentage="85">
+                                    <span class="metric-value">85%</span>
+                                </div>
+                                <span class="metric-label">Win Rate</span>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-circle" data-percentage="72">
+                                    <span class="metric-value">72%</span>
+                                </div>
+                                <span class="metric-label">Active Rate</span>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-circle" data-percentage="94">
+                                    <span class="metric-value">94%</span>
+                                </div>
+                                <span class="metric-label">Success Rate</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Auctions Content -->
+            <div class="auctions-content" id="auctionsContent" style="display: none;">
+                <div class="auctions-header">
+                    <h1>Auction Management</h1>
+                    <p>Manage your auctions, create new listings, and track performance</p>
+                    <button class="create-auction-btn" onclick="showCreateAuctionModal()">
+                        <i class="fas fa-plus"></i> Create New Auction
+                    </button>
+                </div>
+
+                <!-- Auction Filters -->
+                <div class="auction-filters">
+                    <div class="filter-group">
+                        <label>Status:</label>
+                        <select id="statusFilter">
+                            <option value="all">All Auctions</option>
+                            <option value="active">Active</option>
+                            <option value="upcoming">Upcoming</option>
+                            <option value="completed">Completed</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Category:</label>
+                        <select id="categoryFilter">
+                            <option value="all">All Categories</option>
+                            <option value="art">Art & Antiques</option>
+                            <option value="jewelry">Jewelry</option>
+                            <option value="electronics">Electronics</option>
+                            <option value="collectibles">Collectibles</option>
+                            <option value="automobiles">Automobiles</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Sort By:</label>
+                        <select id="sortFilter">
+                            <option value="newest">Newest First</option>
+                            <option value="oldest">Oldest First</option>
+                            <option value="price-high">Price: High to Low</option>
+                            <option value="price-low">Price: Low to High</option>
+                            <option value="bids">Most Bids</option>
+                        </select>
+                    </div>
+                    <div class="search-auctions">
+                        <input type="text" placeholder="Search auctions..." id="auctionSearch">
+                        <i class="fas fa-search"></i>
+                    </div>
+                </div>
+
+                <!-- Auction Stats -->
+                <div class="auction-stats">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-play-circle"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Active Auctions</h3>
+                            <div class="stat-value">24</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Upcoming</h3>
+                            <div class="stat-value">12</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Completed</h3>
+                            <div class="stat-value">1,247</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-dollar-sign"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Total Revenue</h3>
+                            <div class="stat-value">$2.8M</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Auctions Grid -->
+                <div class="auctions-grid" id="auctionsGrid">
+                    <!-- Active Auctions -->
+                    <div class="auction-card active" data-category="art" data-status="active">
+                        <div class="auction-image">
+                            <img src="https://via.placeholder.com/300x200" alt="Vintage Rolex Watch">
+                            <div class="auction-status-badge active">LIVE</div>
+                            <div class="auction-timer">
+                                <i class="fas fa-clock"></i>
+                                <span>2h 45m left</span>
+                            </div>
+                        </div>
+                        <div class="auction-details">
+                            <h3>Vintage Rolex Submariner 1965</h3>
+                            <p class="auction-category">Watches & Jewelry</p>
+                            <div class="auction-price">
+                                <span class="current-bid">Current Bid: $12,500</span>
+                                <span class="bid-count">127 bids</span>
+                            </div>
+                            <div class="auction-meta">
+                                <span class="seller">Seller: WatchCollector</span>
+                                <span class="condition">Condition: Excellent</span>
+                            </div>
+                            <div class="auction-actions">
+                                <button class="btn-primary" onclick="viewAuction('auction1')">View Details</button>
+                                <button class="btn-secondary" onclick="editAuction('auction1')">Edit</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="auction-card active" data-category="art" data-status="active">
+                        <div class="auction-image">
+                            <img src="https://via.placeholder.com/300x200" alt="Picasso Painting">
+                            <div class="auction-status-badge active">LIVE</div>
+                            <div class="auction-timer">
+                                <i class="fas fa-clock"></i>
+                                <span>1d 3h left</span>
+                            </div>
+                        </div>
+                        <div class="auction-details">
+                            <h3>Picasso Original Painting "Blue Period"</h3>
+                            <p class="auction-category">Art & Antiques</p>
+                            <div class="auction-price">
+                                <span class="current-bid">Current Bid: $89,500</span>
+                                <span class="bid-count">203 bids</span>
+                            </div>
+                            <div class="auction-meta">
+                                <span class="seller">Seller: ArtGalleryNYC</span>
+                                <span class="condition">Condition: Mint</span>
+                            </div>
+                            <div class="auction-actions">
+                                <button class="btn-primary" onclick="viewAuction('auction2')">View Details</button>
+                                <button class="btn-secondary" onclick="editAuction('auction2')">Edit</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="auction-card upcoming" data-category="jewelry" data-status="upcoming">
+                        <div class="auction-image">
+                            <img src="https://via.placeholder.com/300x200" alt="Diamond Ring">
+                            <div class="auction-status-badge upcoming">UPCOMING</div>
+                            <div class="auction-timer">
+                                <i class="fas fa-calendar"></i>
+                                <span>Starts in 2h 15m</span>
+                            </div>
+                        </div>
+                        <div class="auction-details">
+                            <h3>5-Carat Diamond Engagement Ring</h3>
+                            <p class="auction-category">Jewelry</p>
+                            <div class="auction-price">
+                                <span class="starting-bid">Starting Bid: $25,000</span>
+                                <span class="reserve-price">Reserve: $35,000</span>
+                            </div>
+                            <div class="auction-meta">
+                                <span class="seller">Seller: DiamondDealer</span>
+                                <span class="condition">Condition: New</span>
+                            </div>
+                            <div class="auction-actions">
+                                <button class="btn-primary" onclick="viewAuction('auction3')">View Details</button>
+                                <button class="btn-secondary" onclick="editAuction('auction3')">Edit</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="auction-card completed" data-category="automobiles" data-status="completed">
+                        <div class="auction-image">
+                            <img src="https://via.placeholder.com/300x200" alt="Vintage Ferrari">
+                            <div class="auction-status-badge completed">SOLD</div>
+                            <div class="auction-timer">
+                                <i class="fas fa-check"></i>
+                                <span>Ended 2 days ago</span>
+                            </div>
+                        </div>
+                        <div class="auction-details">
+                            <h3>1967 Ferrari 250 GT California</h3>
+                            <p class="auction-category">Automobiles</p>
+                            <div class="auction-price">
+                                <span class="final-price">Sold for: $1,250,000</span>
+                                <span class="bid-count">45 bids</span>
+                            </div>
+                            <div class="auction-meta">
+                                <span class="seller">Seller: ClassicCars</span>
+                                <span class="condition">Condition: Restored</span>
+                            </div>
+                            <div class="auction-actions">
+                                <button class="btn-primary" onclick="viewAuction('auction4')">View Details</button>
+                                <button class="btn-secondary" onclick="duplicateAuction('auction4')">Duplicate</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="auction-card active" data-category="electronics" data-status="active">
+                        <div class="auction-image">
+                            <img src="https://via.placeholder.com/300x200" alt="Vintage Computer">
+                            <div class="auction-status-badge active">LIVE</div>
+                            <div class="auction-timer">
+                                <i class="fas fa-clock"></i>
+                                <span>5h 30m left</span>
+                            </div>
+                        </div>
+                        <div class="auction-details">
+                            <h3>Apple I Computer (1976) - Rare</h3>
+                            <p class="auction-category">Electronics & Tech</p>
+                            <div class="auction-price">
+                                <span class="current-bid">Current Bid: $45,200</span>
+                                <span class="bid-count">89 bids</span>
+                            </div>
+                            <div class="auction-meta">
+                                <span class="seller">Seller: TechCollector</span>
+                                <span class="condition">Condition: Working</span>
+                            </div>
+                            <div class="auction-actions">
+                                <button class="btn-primary" onclick="viewAuction('auction5')">View Details</button>
+                                <button class="btn-secondary" onclick="editAuction('auction5')">Edit</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="auction-card upcoming" data-category="collectibles" data-status="upcoming">
+                        <div class="auction-image">
+                            <img src="https://via.placeholder.com/300x200" alt="Baseball Card">
+                            <div class="auction-status-badge upcoming">UPCOMING</div>
+                            <div class="auction-timer">
+                                <i class="fas fa-calendar"></i>
+                                <span>Starts in 1d 8h</span>
+                            </div>
+                        </div>
+                        <div class="auction-details">
+                            <h3>1909 T206 Honus Wagner Baseball Card</h3>
+                            <p class="auction-category">Sports Memorabilia</p>
+                            <div class="auction-price">
+                                <span class="starting-bid">Starting Bid: $500,000</span>
+                                <span class="reserve-price">Reserve: $750,000</span>
+                            </div>
+                            <div class="auction-meta">
+                                <span class="seller">Seller: SportsCollector</span>
+                                <span class="condition">Condition: PSA 8</span>
+                            </div>
+                            <div class="auction-actions">
+                                <button class="btn-primary" onclick="viewAuction('auction6')">View Details</button>
+                                <button class="btn-secondary" onclick="editAuction('auction6')">Edit</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Load More Button -->
+                <div class="load-more-container">
+                    <button class="load-more-btn" onclick="loadMoreAuctions()">
+                        <i class="fas fa-plus"></i> Load More Auctions
+                    </button>
+                </div>
+            </div>
+
+            <!-- Analytics Content -->
+            <div class="analytics-content" id="analyticsContent" style="display: none;">
+                <div class="analytics-header">
+                    <h1>Analytics Dashboard</h1>
+                    <p>Comprehensive insights into your auction platform performance</p>
+                </div>
+
+                <!-- Analytics Summary Cards -->
+                <div class="analytics-summary">
+                    <div class="analytics-card">
+                        <div class="analytics-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="analytics-info">
+                            <h3>Total Revenue</h3>
+                            <div class="analytics-value">$2,847,392</div>
+                            <div class="analytics-change positive">+18.5% from last month</div>
+                        </div>
+                    </div>
+                    <div class="analytics-card">
+                        <div class="analytics-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="analytics-info">
+                            <h3>Total Users</h3>
+                            <div class="analytics-value">15,847</div>
+                            <div class="analytics-change positive">+12.3% from last month</div>
+                        </div>
+                    </div>
+                    <div class="analytics-card">
+                        <div class="analytics-icon">
+                            <i class="fas fa-gavel"></i>
+                        </div>
+                        <div class="analytics-info">
+                            <h3>Auctions Completed</h3>
+                            <div class="analytics-value">3,247</div>
+                            <div class="analytics-change positive">+8.7% from last month</div>
+                        </div>
+                    </div>
+                    <div class="analytics-card">
+                        <div class="analytics-icon">
+                            <i class="fas fa-percentage"></i>
+                        </div>
+                        <div class="analytics-info">
+                            <h3>Success Rate</h3>
+                            <div class="analytics-value">94.2%</div>
+                            <div class="analytics-change positive">+2.1% from last month</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analytics Charts Row 1 -->
+                <div class="analytics-charts-row">
+                    <div class="analytics-chart-container">
+                        <div class="chart-header">
+                            <h3>Revenue Over Time</h3>
+                            <div class="chart-controls">
+                                <select id="revenueTimeRange">
+                                    <option value="6m">Last 6 Months</option>
+                                    <option value="1y">Last Year</option>
+                                    <option value="2y">Last 2 Years</option>
+                                </select>
+                            </div>
+                        </div>
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                    <div class="analytics-chart-container">
+                        <div class="chart-header">
+                            <h3>User Growth</h3>
+                        </div>
+                        <canvas id="userGrowthChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Analytics Charts Row 2 -->
+                <div class="analytics-charts-row">
+                    <div class="analytics-chart-container">
+                        <div class="chart-header">
+                            <h3>Bid Distribution by Category</h3>
+                        </div>
+                        <canvas id="bidDistributionChart"></canvas>
+                    </div>
+                    <div class="analytics-chart-container">
+                        <div class="chart-header">
+                            <h3>Geographic Distribution</h3>
+                        </div>
+                        <canvas id="geographicChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Analytics Tables -->
+                <div class="analytics-tables">
+                    <div class="analytics-table-container">
+                        <h3>Top Performing Auctions</h3>
+                        <div class="analytics-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Item</th>
+                                        <th>Category</th>
+                                        <th>Final Price</th>
+                                        <th>Bids</th>
+                                        <th>Duration</th>
+                                        <th>Success Rate</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Vintage Rolex Submariner</td>
+                                        <td>Watches</td>
+                                        <td>$45,200</td>
+                                        <td>127</td>
+                                        <td>7 days</td>
+                                        <td>100%</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Picasso Original Painting</td>
+                                        <td>Art</td>
+                                        <td>$89,500</td>
+                                        <td>203</td>
+                                        <td>10 days</td>
+                                        <td>100%</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Diamond Engagement Ring</td>
+                                        <td>Jewelry</td>
+                                        <td>$23,800</td>
+                                        <td>89</td>
+                                        <td>5 days</td>
+                                        <td>100%</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Vintage Ferrari 250 GT</td>
+                                        <td>Automobiles</td>
+                                        <td>$1,250,000</td>
+                                        <td>45</td>
+                                        <td>14 days</td>
+                                        <td>100%</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="analytics-table-container">
+                        <h3>User Activity Metrics</h3>
+                        <div class="analytics-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Metric</th>
+                                        <th>Current</th>
+                                        <th>Previous</th>
+                                        <th>Change</th>
+                                        <th>Trend</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Daily Active Users</td>
+                                        <td>2,847</td>
+                                        <td>2,654</td>
+                                        <td>+7.3%</td>
+                                        <td><i class="fas fa-arrow-up positive"></i></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Average Session Duration</td>
+                                        <td>24.5 min</td>
+                                        <td>22.1 min</td>
+                                        <td>+10.9%</td>
+                                        <td><i class="fas fa-arrow-up positive"></i></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Bounce Rate</td>
+                                        <td>32.1%</td>
+                                        <td>35.4%</td>
+                                        <td>-9.3%</td>
+                                        <td><i class="fas fa-arrow-down positive"></i></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Conversion Rate</td>
+                                        <td>8.7%</td>
+                                        <td>7.9%</td>
+                                        <td>+10.1%</td>
+                                        <td><i class="fas fa-arrow-up positive"></i></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analytics Insights -->
+                <div class="analytics-insights">
+                    <h3>Key Insights</h3>
+                    <div class="insights-grid">
+                        <div class="insight-card">
+                            <div class="insight-icon">
+                                <i class="fas fa-trophy"></i>
+                            </div>
+                            <div class="insight-content">
+                                <h4>Peak Performance</h4>
+                                <p>Thursday shows the highest bidding activity with 23% more bids than the weekly average.</p>
+                            </div>
+                        </div>
+                        <div class="insight-card">
+                            <div class="insight-icon">
+                                <i class="fas fa-gem"></i>
+                            </div>
+                            <div class="insight-content">
+                                <h4>Premium Categories</h4>
+                                <p>Art & Antiques generate 45% of total revenue despite being only 20% of total auctions.</p>
+                            </div>
+                        </div>
+                        <div class="insight-card">
+                            <div class="insight-icon">
+                                <i class="fas fa-mobile-alt"></i>
+                            </div>
+                            <div class="insight-content">
+                                <h4>Mobile Growth</h4>
+                                <p>Mobile bidding has increased by 34% this quarter, now representing 67% of all bids.</p>
+                            </div>
+                        </div>
+                        <div class="insight-card">
+                            <div class="insight-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="insight-content">
+                                <h4>Optimal Duration</h4>
+                                <p>7-day auctions have the highest success rate (96.8%) and generate 15% more revenue.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
+
+
